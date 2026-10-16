@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart System | Gaming Gear Store & Admin Panel</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter and Tajawal -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            red: '#E50914',
+                            redHover: '#B20710',
+                            redDark: '#8C0000',
+                            white: '#FFFFFF',
+                            lightBg: '#F8F9FA',
+                            cardBg: '#FFFFFF',
+                            darkText: '#121212',
+                            grayText: '#666666'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Tajawal', 'sans-serif'],
+                        arabic: ['Tajawal', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .glow-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glow-hover:hover {
+            box-shadow: 0 0 15px rgba(229, 9, 20, 0.6), 0 0 25px rgba(255, 255, 255, 0.8);
+            border-color: #E50914 !important;
+            transform: translateY(-2px);
+        }
+        .glow-card {
+            transition: all 0.3s ease;
+        }
+        .glow-card:hover {
+            box-shadow: 0 10px 25px -5px rgba(229, 9, 20, 0.3), 0 8px 10px -6px rgba(229, 9, 20, 0.2);
+            border-color: #E50914;
+            transform: translateY(-4px);
+        }
+        .red-glow-text {
+            text-shadow: 0 0 8px rgba(229, 9, 20, 0.5);
+        }
+        .dropdown-menu {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .dropdown-wrapper:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .carousel-slide {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.6s ease-in-out;
+        }
+        .carousel-slide.active {
+            display: block;
+            opacity: 1;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E50914;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-brand-lightBg text-brand-darkText font-sans flex flex-col min-h-screen">
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-black text-white px-5 py-3 rounded-xl shadow-2xl border-2 border-brand-red flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-brand-red text-xl"></i>
+        <span id="toast-message" class="font-semibold text-sm">Action successful!</span>
+    </div>
+
+    <!-- ================= MODE SWITCHER BAR ================= -->
+    <div class="bg-black text-white px-4 py-2 text-xs flex justify-between items-center z-50 border-b border-brand-red/30">
+        <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-brand-red animate-pulse"></span>
+            <span class="font-bold tracking-wider">Smart System Management Portal</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="switchView('store')" id="btn-view-store" class="px-3 py-1 rounded bg-brand-red text-white font-bold transition hover:bg-brand-redHover">
+                <i class="fa-solid fa-store mr-1"></i> Live Storefront
+            </button>
+            <button onclick="checkAdminAccess()" id="btn-view-admin" class="px-3 py-1 rounded bg-zinc-800 text-gray-300 font-bold transition hover:bg-zinc-700 hover:text-white">
+                <i class="fa-solid fa-lock mr-1"></i> Admin Panel
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ================= VIEW 1: LIVE STOREFRONT ================= -->
+    <div id="view-store" class="flex flex-col min-h-screen">
+        
+        <!-- Sticky Header -->
+        <header class="sticky top-0 z-40 bg-white border-b-2 border-brand-red shadow-md transition-all duration-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-20">
+                    
+                    <!-- Mobile Hamburger -->
+                    <div class="flex items-center lg:hidden">
+                        <button id="mobile-menu-btn" class="p-2 rounded-md text-brand-darkText hover:text-brand-red focus:outline-none">
+                            <i class="fa-solid fa-bars text-2xl"></i>
+                        </button>
+                    </div>
+
+                    <!-- Horizontal Menus (Desktop) -->
+                    <nav class="hidden lg:flex items-center space-x-1 xl:space-x-2">
+                        <div class="relative dropdown-wrapper">
+                            <button class="px-3 py-2 rounded-lg text-sm font-bold text-brand-red border border-transparent hover:border-brand-red glow-hover flex items-center gap-1.5">
+                                <i class="fa-solid fa-desktop text-xs"></i> Computer Main Bar <i class="fa-solid fa-chevron-down text-xs opacity-70"></i>
+                            </button>
+                            <div class="dropdown-menu absolute left-0 mt-1 w-56 bg-white rounded-xl shadow-xl border-2 border-brand-red p-2 z-50">
+                                <a href="#products" onclick="filterCategory('PC')" class="block px-4 py-2 text-sm font-semibold text-gray-800 rounded-lg hover:bg-brand-red hover:text-white">Gaming PCs & Laptops</a>
+                            </div>
+                        </div>
+                        <div class="relative dropdown-wrapper">
+                            <button class="px-3 py-2 rounded-lg text-sm font-bold text-brand-red border border-transparent hover:border-brand-red glow-hover flex items-center gap-1.5">
+                                <i class="fa-solid fa-gamepad text-xs"></i> Consoles <i class="fa-solid fa-chevron-down text-xs opacity-70"></i>
+                            </button>
+                            <div class="dropdown-menu absolute left-0 mt-1 w-52 bg-white rounded-xl shadow-xl border-2 border-brand-red p-2 z-50">
+                                <a href="#products" onclick="filterCategory('Consoles')" class="block px-4 py-2 text-sm font-semibold text-gray-800 rounded-lg hover:bg-brand-red hover:text-white">PlayStation & Xbox</a>
+                            </div>
+                        </div>
+                        <div class="relative dropdown-wrapper">
+                            <button class="px-3 py-2 rounded-lg text-sm font-bold text-brand-red border border-transparent hover:border-brand-red glow-hover flex items-center gap-1.5">
+                                <i class="fa-solid fa-tv text-xs"></i> Monitors <i class="fa-solid fa-chevron-down text-xs opacity-70"></i>
+                            </button>
+                            <div class="dropdown-menu absolute left-0 mt-1 w-48 bg-white rounded-xl shadow-xl border-2 border-brand-red p-2 z-50">
+                                <a href="#products" onclick="filterCategory('Monitors')" class="block px-4 py-2 text-sm font-semibold text-gray-800 rounded-lg hover:bg-brand-red hover:text-white">High Refresh Displays</a>
+                            </div>
+                        </div>
+                        <div class="relative dropdown-wrapper">
+                            <button class="px-3 py-2 rounded-lg text-sm font-bold text-brand-red border border-transparent hover:border-brand-red glow-hover flex items-center gap-1.5">
+                                <i class="fa-solid fa-headphones text-xs"></i> Headsets <i class="fa-solid fa-chevron-down text-xs opacity-70"></i>
+                            </button>
+                            <div class="dropdown-menu absolute left-0 mt-1 w-48 bg-white rounded-xl shadow-xl border-2 border-brand-red p-2 z-50">
+                                <a href="#products" onclick="filterCategory('Headsets')" class="block px-4 py-2 text-sm font-semibold text-gray-800 rounded-lg hover:bg-brand-red hover:text-white">Surround Sound</a>
+                            </div>
+                        </div>
+                        <div class="relative dropdown-wrapper">
+                            <button class="px-3 py-2 rounded-lg text-sm font-bold text-brand-red border border-transparent hover:border-brand-red glow-hover flex items-center gap-1.5">
+                                <i class="fa-solid fa-keyboard text-xs"></i> Keyboards <i class="fa-solid fa-chevron-down text-xs opacity-70"></i>
+                            </button>
+                            <div class="dropdown-menu absolute left-0 mt-1 w-48 bg-white rounded-xl shadow-xl border-2 border-brand-red p-2 z-50">
+                                <a href="#products" onclick="filterCategory('Keyboards')" class="block px-4 py-2 text-sm font-semibold text-gray-800 rounded-lg hover:bg-brand-red hover:text-white">Mechanical RGB</a>
+                            </div>
+                        </div>
+                        <div class="relative dropdown-wrapper">
+                            <button class="px-3 py-2 rounded-lg text-sm font-bold text-brand-red border border-transparent hover:border-brand-red glow-hover flex items-center gap-1.5">
+                                <i class="fa-solid fa-mouse text-xs"></i> Mice <i class="fa-solid fa-chevron-down text-xs opacity-70"></i>
+                            </button>
+                            <div class="dropdown-menu absolute left-0 mt-1 w-48 bg-white rounded-xl shadow-xl border-2 border-brand-red p-2 z-50">
+                                <a href="#products" onclick="filterCategory('Mice')" class="block px-4 py-2 text-sm font-semibold text-gray-800 rounded-lg hover:bg-brand-red hover:text-white">Ultralight Pro Mice</a>
+                            </div>
+                        </div>
+                        <div class="relative dropdown-wrapper">
+                            <button class="px-3 py-2 rounded-lg text-sm font-bold text-brand-red border border-transparent hover:border-brand-red glow-hover flex items-center gap-1.5">
+                                <i class="fa-solid fa-gamepad text-xs"></i> Controllers <i class="fa-solid fa-chevron-down text-xs opacity-70"></i>
+                            </button>
+                            <div class="dropdown-menu absolute left-0 mt-1 w-48 bg-white rounded-xl shadow-xl border-2 border-brand-red p-2 z-50">
+                                <a href="#products" onclick="filterCategory('Controllers')" class="block px-4 py-2 text-sm font-semibold text-gray-800 rounded-lg hover:bg-brand-red hover:text-white">Wireless Pads</a>
+                            </div>
+                        </div>
+                        <div class="relative dropdown-wrapper">
+                            <button class="px-3 py-2 rounded-lg text-sm font-bold text-brand-red border border-transparent hover:border-brand-red glow-hover flex items-center gap-1.5">
+                                <i class="fa-solid fa-mobile-screen-button text-xs"></i> Phone Accessories <i class="fa-solid fa-chevron-down text-xs opacity-70"></i>
+                            </button>
+                            <div class="dropdown-menu absolute left-0 mt-1 w-52 bg-white rounded-xl shadow-xl border-2 border-brand-red p-2 z-50">
+                                <a href="#products" onclick="filterCategory('Phone')" class="block px-4 py-2 text-sm font-semibold text-gray-800 rounded-lg hover:bg-brand-red hover:text-white">Mobile Coolers & Grips</a>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <!-- Right Side: Cart & Logo/Phone -->
+                    <div class="flex items-center gap-4">
+                        <button id="cart-btn" class="relative p-2 text-gray-800 hover:text-brand-red transition">
+                            <i class="fa-solid fa-cart-shopping text-2xl"></i>
+                            <span id="cart-count" class="absolute -top-1 -right-1 bg-brand-red text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">0</span>
+                        </button>
+                        <div class="h-8 w-[2px] bg-gray-200 hidden sm:block"></div>
+                        <div class="flex flex-col items-end justify-center">
+                            <a href="#" class="flex items-center gap-2 group">
+                                <div class="w-9 h-9 rounded-xl bg-brand-red flex items-center justify-center text-white shadow-md">
+                                    <i class="fa-solid fa-bolt text-lg"></i>
+                                </div>
+                                <span id="store-brand-name" class="text-xl sm:text-2xl font-black tracking-tight text-black">
+                                    SMART<span class="text-brand-red">SYSTEM</span>
+                                </span>
+                            </a>
+                            <a id="store-phone-display" href="tel:0922139629" class="text-xs sm:text-sm font-bold text-brand-red hover:underline flex items-center gap-1.5 mt-0.5">
+                                <i class="fa-solid fa-phone text-[10px]"></i> 092-213-9629
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Drawer Menu -->
+            <div id="mobile-menu" class="hidden lg:hidden bg-white border-t border-gray-200 px-4 pt-2 pb-6 space-y-2">
+                <a href="#products" onclick="filterCategory('PC'); toggleMobileMenu()" class="block py-2 text-brand-red font-bold">Computer Main Bar</a>
+                <a href="#products" onclick="filterCategory('Consoles'); toggleMobileMenu()" class="block py-2 text-brand-red font-bold">Consoles</a>
+                <a href="#products" onclick="filterCategory('Monitors'); toggleMobileMenu()" class="block py-2 text-brand-red font-bold">Monitors</a>
+                <a href="#products" onclick="filterCategory('Headsets'); toggleMobileMenu()" class="block py-2 text-brand-red font-bold">Headsets</a>
+                <a href="#products" onclick="filterCategory('Keyboards'); toggleMobileMenu()" class="block py-2 text-brand-red font-bold">Keyboards</a>
+                <a href="#products" onclick="filterCategory('Mice'); toggleMobileMenu()" class="block py-2 text-brand-red font-bold">Mice</a>
+                <a href="#products" onclick="filterCategory('Controllers'); toggleMobileMenu()" class="block py-2 text-brand-red font-bold">Controllers</a>
+                <a href="#products" onclick="filterCategory('Phone'); toggleMobileMenu()" class="block py-2 text-brand-red font-bold">Phone Accessories</a>
+            </div>
+        </header>
+
+        <!-- Dynamic Hero Banner -->
+        <section class="relative bg-black overflow-hidden my-4 sm:my-6 max-w-7xl mx-auto rounded-2xl sm:rounded-3xl shadow-2xl border-2 border-brand-red/30 mx-4 lg:mx-auto w-full">
+            <div id="hero-carousel" class="relative min-h-[360px] sm:min-h-[440px] flex items-center">
+                <!-- Dynamically populated via JS -->
+            </div>
+        </section>
+
+        <!-- Product Showcase Grid -->
+        <main id="products" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex-grow w-full">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 border-b pb-4 border-gray-200">
+                <div>
+                    <div class="flex items-center gap-2 text-brand-red font-bold text-sm tracking-wider uppercase">
+                        <span class="w-3 h-3 rounded-full bg-brand-red animate-ping inline-block"></span>
+                        Smart System Featured Selection
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl font-black text-brand-darkText tracking-tight">
+                        EXPLORE <span class="text-brand-red">OUR PRODUCTS</span>
+                    </h2>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="filterCategory('ALL')" class="cat-filter-btn active bg-brand-red text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-xl transition shadow">All Products</button>
+                    <button onclick="filterCategory('Consoles')" class="cat-filter-btn bg-white hover:bg-gray-100 text-gray-700 text-xs sm:text-sm font-bold px-4 py-2 rounded-xl border border-gray-200">Consoles</button>
+                    <button onclick="filterCategory('PC')" class="cat-filter-btn bg-white hover:bg-gray-100 text-gray-700 text-xs sm:text-sm font-bold px-4 py-2 rounded-xl border border-gray-200">PC Gear</button>
+                    <button onclick="filterCategory('Headsets')" class="cat-filter-btn bg-white hover:bg-gray-100 text-gray-700 text-xs sm:text-sm font-bold px-4 py-2 rounded-xl border border-gray-200">Headsets</button>
+                    <button onclick="shuffleProducts()" class="bg-black hover:bg-gray-800 text-white text-xs sm:text-sm font-bold px-3 py-2 rounded-xl border border-gray-800"><i class="fa-solid fa-shuffle"></i> Shuffle</button>
+                </div>
+            </div>
+
+            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
+                <!-- Populated via JS -->
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-black text-white border-t-4 border-brand-red pt-12 pb-8 mt-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+                <div>
+                    <h3 id="footer-brand-name" class="text-3xl sm:text-4xl font-black text-white tracking-wider">SMART<span class="text-brand-red">SYSTEM</span></h3>
+                    <p class="text-xl font-bold font-arabic text-brand-red mt-1">سمارت سيستم لملحقات الألعاب والإلكترونيات</p>
+                </div>
+                <div class="bg-zinc-900 border border-brand-red/40 px-6 py-3 rounded-2xl inline-block shadow-lg">
+                    <a id="footer-phone-display" href="tel:0922139629" class="text-lg sm:text-xl font-extrabold text-white hover:text-brand-red flex items-center gap-3">
+                        <i class="fa-solid fa-phone text-brand-red"></i> 092-213-9629
+                    </a>
+                </div>
+                <div class="max-w-xl mx-auto bg-zinc-950 p-4 rounded-xl border border-zinc-800">
+                    <p class="text-xs text-gray-400 font-semibold mb-1 uppercase tracking-widest">Main Branch Address</p>
+                    <p id="footer-address-display" class="text-lg sm:text-xl font-bold text-gray-100 font-arabic">
+                        <i class="fa-solid fa-location-dot text-brand-red ml-2"></i> ليبيا - سبها - شارع جمال عبد الناصر
+                    </p>
+                </div>
+                <p class="text-xs text-gray-500 pt-4">© 2026 Smart System. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+
+    <!-- ================= VIEW 2: PRIVATE ADMIN PANEL ================= -->
+    <div id="view-admin" class="hidden flex-col min-h-screen bg-zinc-900 text-white">
+        
+        <!-- Login Subview -->
+        <div id="admin-login-screen" class="flex-grow flex items-center justify-center p-4">
+            <div class="bg-zinc-950 border-2 border-brand-red rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-6">
+                <div class="text-center space-y-2">
+                    <div class="w-16 h-16 bg-brand-red text-white rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-lg">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h2 class="text-2xl font-black">ADMIN ACCESS</h2>
+                    <p class="text-xs text-gray-400">Secure management portal for Smart System</p>
+                </div>
+
+                <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Username</label>
+                        <input type="text" id="admin-user" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:border-brand-red outline-none transition" placeholder="admin">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Password</label>
+                        <input type="password" id="admin-pass" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:border-brand-red outline-none transition" placeholder="••••••••">
+                    </div>
+                    <div class="text-xs text-gray-500 bg-zinc-900 p-3 rounded-lg border border-zinc-800">
+                        <i class="fa-solid fa-circle-info text-brand-red"></i> Default Credentials: Username: <code class="text-white font-bold">admin</code> | Password: <code class="text-white font-bold">smart2026</code>
+                    </div>
+                    <button type="submit" class="w-full bg-brand-red hover:bg-brand-redHover text-white font-black py-3.5 rounded-xl shadow-lg transition">
+                        SECURE LOGIN
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Dashboard Subview (Hidden until authenticated) -->
+        <div id="admin-dashboard-screen" class="hidden flex-grow flex flex-col">
+            <!-- Admin Header -->
+            <header class="bg-zinc-950 border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-brand-red rounded-xl flex items-center justify-center font-black">SS</div>
+                    <div>
+                        <h1 class="font-black text-lg">Smart System Admin</h1>
+                        <span class="text-xs text-emerald-400 font-semibold"><i class="fa-solid fa-circle text-[8px]"></i> Session Active</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="switchView('store')" class="bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-xl text-xs font-bold transition">
+                        <i class="fa-solid fa-eye mr-1"></i> View Live Store
+                    </button>
+                    <button onclick="adminLogout()" class="bg-red-950/60 hover:bg-brand-red text-red-300 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition border border-red-800">
+                        <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
+                    </button>
+                </div>
+            </header>
+
+            <!-- Admin Nav Tabs -->
+            <div class="bg-zinc-950 px-6 border-b border-zinc-800 flex gap-2 overflow-x-auto">
+                <button onclick="switchAdminTab('overview')" id="tab-btn-overview" class="admin-tab px-5 py-3 border-b-2 border-brand-red font-bold text-sm text-white flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie"></i> Overview
+                </button>
+                <button onclick="switchAdminTab('products')" id="tab-btn-products" class="admin-tab px-5 py-3 border-b-2 border-transparent font-bold text-sm text-gray-400 hover:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-boxes-stacked"></i> Products (CRUD)
+                </button>
+                <button onclick="switchAdminTab('banners')" id="tab-btn-banners" class="admin-tab px-5 py-3 border-b-2 border-transparent font-bold text-sm text-gray-400 hover:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-image"></i> Banners & Offers
+                </button>
+                <button onclick="switchAdminTab('settings')" id="tab-btn-settings" class="admin-tab px-5 py-3 border-b-2 border-transparent font-bold text-sm text-gray-400 hover:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-gear"></i> Store Settings
+                </button>
+            </div>
+
+            <!-- Admin Tab Content Body -->
+            <div class="max-w-7xl w-full mx-auto p-6 flex-grow space-y-6">
+
+                <!-- TAB 1: OVERVIEW -->
+                <div id="admin-tab-overview" class="admin-tab-content space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
+                            <span class="text-xs text-gray-400 uppercase font-bold tracking-wider">Total Products</span>
+                            <h3 id="stat-total-products" class="text-3xl font-black text-brand-red">12</h3>
+                            <p class="text-xs text-emerald-400 font-semibold"><i class="fa-solid fa-arrow-up"></i> Active in store</p>
+                        </div>
+                        <div class="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
+                            <span class="text-xs text-gray-400 uppercase font-bold tracking-wider">Active Banners</span>
+                            <h3 id="stat-total-banners" class="text-3xl font-black text-brand-red">2</h3>
+                            <p class="text-xs text-emerald-400 font-semibold"><i class="fa-solid fa-rotate"></i> Cycling active</p>
+                        </div>
+                        <div class="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
+                            <span class="text-xs text-gray-400 uppercase font-bold tracking-wider">Categories</span>
+                            <h3 class="text-3xl font-black text-brand-red">8</h3>
+                            <p class="text-xs text-gray-400 font-semibold">Consoles, PC, Phone & more</p>
+                        </div>
+                        <div class="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
+                            <span class="text-xs text-gray-400 uppercase font-bold tracking-wider">Contact Phone</span>
+                            <h3 id="stat-phone" class="text-xl font-black text-white pt-1">092-213-9629</h3>
+                            <p class="text-xs text-brand-red font-semibold">Primary Store Line</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-4">
+                        <h3 class="font-extrabold text-lg text-white">Quick Management Shortcuts</h3>
+                        <div class="flex flex-wrap gap-4">
+                            <button onclick="switchAdminTab('products'); openAddProductModal();" class="bg-brand-red hover:bg-brand-redHover px-5 py-3 rounded-xl font-bold text-sm shadow-lg transition flex items-center gap-2">
+                                <i class="fa-solid fa-plus"></i> Add New Product
+                            </button>
+                            <button onclick="switchAdminTab('banners')" class="bg-zinc-800 hover:bg-zinc-700 px-5 py-3 rounded-xl font-bold text-sm transition flex items-center gap-2">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit Hero Banner
+                            </button>
+                            <button onclick="switchAdminTab('settings')" class="bg-zinc-800 hover:bg-zinc-700 px-5 py-3 rounded-xl font-bold text-sm transition flex items-center gap-2">
+                                <i class="fa-solid fa-phone"></i> Update Contact Info
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: PRODUCTS CRUD -->
+                <div id="admin-tab-products" class="admin-tab-content hidden space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-black text-white">Product Inventory Management</h3>
+                            <p class="text-xs text-gray-400">Add, edit, or delete items instantly synced with the live store.</p>
+                        </div>
+                        <button onclick="openAddProductModal()" class="bg-brand-red hover:bg-brand-redHover px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg transition flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Add Product
+                        </button>
+                    </div>
+
+                    <div class="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-zinc-900 border-b border-zinc-800 text-xs font-bold uppercase tracking-wider text-gray-400">
+                                        <th class="p-4">Product</th>
+                                        <th class="p-4">Category</th>
+                                        <th class="p-4">Price</th>
+                                        <th class="p-4">Rating</th>
+                                        <th class="p-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-product-table-body" class="divide-y divide-zinc-800/60 text-sm">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: BANNERS -->
+                <div id="admin-tab-banners" class="admin-tab-content hidden space-y-6">
+                    <div>
+                        <h3 class="text-xl font-black text-white">Hero Banner & Offers Manager</h3>
+                        <p class="text-xs text-gray-400">Customize the headlines, offers, and image URLs on the top store banner.</p>
+                    </div>
+
+                    <div id="admin-banners-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <!-- TAB 4: SETTINGS -->
+                <div id="admin-tab-settings" class="admin-tab-content hidden space-y-6 max-w-2xl">
+                    <div>
+                        <h3 class="text-xl font-black text-white">Store Settings & Contact Details</h3>
+                        <p class="text-xs text-gray-400">Update company name, phone number, and Arabic address.</p>
+                    </div>
+
+                    <form onsubmit="saveStoreSettings(event)" class="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Company Name</label>
+                            <input type="text" id="setting-company" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:border-brand-red outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Store Phone Number</label>
+                            <input type="text" id="setting-phone" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:border-brand-red outline-none" placeholder="092-213-9629">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Arabic Address (Footer)</label>
+                            <input type="text" id="setting-address" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:border-brand-red outline-none font-arabic" placeholder="ليبيا - سبها - شارع جمال عبد الناصر">
+                        </div>
+                        <button type="submit" class="w-full bg-brand-red hover:bg-brand-redHover font-black py-3.5 rounded-xl shadow-lg transition">
+                            SAVE SETTINGS & SYNC STORE
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= MODALS (Product Add/Edit & Quick View) ================= -->
+    <div id="product-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 relative shadow-2xl border-2 border-brand-red">
+            <button onclick="closeModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-gray-100 hover:bg-brand-red hover:text-white flex items-center justify-center transition font-bold">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <!-- Admin Product Add/Edit Modal -->
+    <div id="admin-product-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-zinc-950 border-2 border-brand-red rounded-3xl max-w-lg w-full p-6 sm:p-8 relative shadow-2xl">
+            <button onclick="closeAdminProductModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-zinc-800 hover:bg-brand-red text-white flex items-center justify-center transition font-bold">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 id="admin-modal-title" class="text-xl font-black text-white mb-4">Add New Product</h3>
+            <form onsubmit="saveAdminProduct(event)" class="space-y-4">
+                <input type="hidden" id="edit-product-id">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Product Name</label>
+                    <input type="text" id="form-p-name" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-white focus:border-brand-red outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Category</label>
+                        <select id="form-p-cat" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-white focus:border-brand-red outline-none">
+                            <option value="Consoles">Consoles</option>
+                            <option value="PC">PC Gear</option>
+                            <option value="Monitors">Monitors</option>
+                            <option value="Headsets">Headsets</option>
+                            <option value="Keyboards">Keyboards</option>
+                            <option value="Mice">Mice</option>
+                            <option value="Controllers">Controllers</option>
+                            <option value="Phone">Phone Accessories</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Price (LYD)</label>
+                        <input type="number" id="form-p-price" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-white focus:border-brand-red outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Image URL</label>
+                    <input type="url" id="form-p-image" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-white focus:border-brand-red outline-none" placeholder="https://images.unsplash.com/...">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Description</label>
+                    <textarea id="form-p-desc" rows="3" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-white focus:border-brand-red outline-none"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-brand-red hover:bg-brand-redHover font-black py-3 rounded-xl shadow-lg transition">
+                    SAVE PRODUCT
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Shopping Cart Drawer -->
+    <div id="cart-drawer" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden justify-end">
+        <div class="bg-white w-full max-w-md h-full shadow-2xl p-6 flex flex-col justify-between border-l-4 border-brand-red">
+            <div>
+                <div class="flex items-center justify-between border-b pb-4">
+                    <h3 class="text-xl font-extrabold text-brand-darkText flex items-center gap-2">
+                        <i class="fa-solid fa-cart-shopping text-brand-red"></i> Your Cart
+                    </h3>
+                    <button onclick="toggleCart()" class="text-gray-400 hover:text-brand-red text-2xl font-bold">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div id="cart-items" class="py-4 space-y-4 max-h-[60vh] overflow-y-auto"></div>
+            </div>
+            <div class="border-t pt-4 space-y-3">
+                <div class="flex justify-between font-extrabold text-lg">
+                    <span>Total Amount:</span>
+                    <span id="cart-total" class="text-brand-red">0 LYD</span>
+                </div>
+                <a id="cart-phone-link" href="tel:0922139629" class="w-full bg-brand-red hover:bg-brand-redHover text-white font-extrabold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-phone"></i> CALL TO PLACE ORDER (092-213-9629)
+                </a>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= APPLICATION LOGIC ================= -->
+    <script>
+        // --- DEFAULT DATA & LOCAL STORAGE SYNC ---
+        const DEFAULT_PRODUCTS = [
+            { id: 1, name: "PlayStation 5 Console (Disc Edition)", category: "Consoles", price: 2650, rating: 5.0, reviews: 42, image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=500&q=80", description: "Experience lightning-fast loading with an ultra-high speed SSD and haptic feedback." },
+            { id: 2, name: "DualSense Edge Wireless Controller", category: "Controllers", price: 850, rating: 4.9, reviews: 28, image: "https://images.unsplash.com/photo-1592840496694-26d035b52b48?auto=format&fit=crop&w=500&q=80", description: "Customizable controls, remappable buttons, and swappable stick caps." },
+            { id: 3, name: "Pro Mechanical RGB Gaming Keyboard", category: "Keyboards", price: 320, rating: 4.8, reviews: 56, image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=500&q=80", description: "Tactile mechanical switches with per-key RGB backlighting." },
+            { id: 4, name: "Ultralight Wireless RGB Gaming Mouse", category: "Mice", price: 210, rating: 4.7, reviews: 34, image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=500&q=80", description: "Sub-60g ultra-lightweight design with 26,000 DPI sensor." },
+            { id: 5, name: "7.1 Wireless Surround Gaming Headset", category: "Headsets", price: 380, rating: 4.9, reviews: 61, image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=500&q=80", description: "Immersive 3D audio precision and noise-canceling microphone." },
+            { id: 6, name: "27\" 4K 144Hz IPS Gaming Monitor", category: "Monitors", price: 1450, rating: 5.0, reviews: 19, image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=500&q=80", description: "Stunning 4K resolution with 1ms response time and HDR400." },
+            { id: 7, name: "Smart System Custom Gaming PC Rig", category: "PC", price: 4200, rating: 5.0, reviews: 15, image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=500&q=80", description: "RTX Graphics, 32GB High Speed DDR5 RAM, and Liquid Cooling." },
+            { id: 8, name: "Mobile Gaming Controller Grip", category: "Phone", price: 140, rating: 4.6, reviews: 88, image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=500&q=80", description: "Turn your smartphone into a console-level handheld." },
+            { id: 9, name: "RGB Dual Controller Charging Station", category: "Consoles", price: 95, rating: 4.8, reviews: 23, image: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=500&q=80", description: "Fast-charging dock for two controllers with LED indicators." },
+            { id: 10, name: "Phone Semiconductor Cooler Fan", category: "Phone", price: 85, rating: 4.7, reviews: 45, image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=500&q=80", description: "Instant cooling prevents thermal throttling during mobile gaming." },
+            { id: 11, name: "Xbox Series X Wireless Controller", category: "Controllers", price: 290, rating: 4.9, reviews: 37, image: "https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?auto=format&fit=crop&w=500&q=80", description: "Textured grip triggers and hybrid D-pad for seamless play." },
+            { id: 12, name: "32\" Curved 165Hz QHD Monitor", category: "Monitors", price: 1100, rating: 4.8, reviews: 29, image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=500&q=80", description: "Immersive 1500R curvature wrap-around display." }
+        ];
+
+        const DEFAULT_BANNERS = [
+            { id: 1, badge: "SPECIAL OFFER • LIMITED TIME", title: "NEXT-GEN PLAYSTATION 5 GEAR", desc: "Upgrade your ultimate battle station with original PS5 consoles, controllers, and headsets.", image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=600&q=80" },
+            { id: 2, badge: "HIGH PERFORMANCE PC SETUP", title: "DOMINATE WITH CUSTOM RIGS", desc: "Mechanical RGB Keyboards, 240Hz High Refresh Monitors, and Pro Wireless Mice.", image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=600&q=80" }
+        ];
+
+        const DEFAULT_SETTINGS = {
+            companyName: "SMART SYSTEM",
+            phone: "092-213-9629",
+            address: "ليبيا - سبها - شارع جمال عبد الناصر"
+        };
+
+        let products = JSON.parse(localStorage.getItem('ss_products')) || DEFAULT_PRODUCTS;
+        let banners = JSON.parse(localStorage.getItem('ss_banners')) || DEFAULT_BANNERS;
+        let settings = JSON.parse(localStorage.getItem('ss_settings')) || DEFAULT_SETTINGS;
+        let cart = [];
+        let currentSlide = 0;
+        let displayedProducts = [...products];
+
+        // --- SAVE TO LOCALSTORAGE & SYNC ---
+        function persistData() {
+            localStorage.setItem('ss_products', JSON.stringify(products));
+            localStorage.setItem('ss_banners', JSON.stringify(banners));
+            localStorage.setItem('ss_settings', JSON.stringify(settings));
+            renderStorefront();
+            renderAdminDashboardStats();
+        }
+
+        // --- VIEW SWITCHER (Storefront <-> Admin) ---
+        function switchView(view) {
+            const storeView = document.getElementById('view-store');
+            const adminView = document.getElementById('view-admin');
+            const btnStore = document.getElementById('btn-view-store');
+            const btnAdmin = document.getElementById('btn-view-admin');
+
+            if (view === 'store') {
+                storeView.classList.remove('hidden');
+                adminView.classList.add('hidden');
+                btnStore.className = "px-3 py-1 rounded bg-brand-red text-white font-bold transition hover:bg-brand-redHover";
+                btnAdmin.className = "px-3 py-1 rounded bg-zinc-800 text-gray-300 font-bold transition hover:bg-zinc-700 hover:text-white";
+                renderStorefront();
+            } else {
+                storeView.classList.add('hidden');
+                adminView.classList.remove('hidden');
+                btnAdmin.className = "px-3 py-1 rounded bg-brand-red text-white font-bold transition hover:bg-brand-redHover";
+                btnStore.className = "px-3 py-1 rounded bg-zinc-800 text-gray-300 font-bold transition hover:bg-zinc-700 hover:text-white";
+                
+                // Check if logged in
+                if (localStorage.getItem('ss_admin_logged') === 'true') {
+                    document.getElementById('admin-login-screen').classList.add('hidden');
+                    document.getElementById('admin-dashboard-screen').classList.remove('hidden');
+                    renderAdminDashboardStats();
+                } else {
+                    document.getElementById('admin-login-screen').classList.remove('hidden');
+                    document.getElementById('admin-dashboard-screen').classList.add('hidden');
+                }
+            }
+        }
+
+        function checkAdminAccess() {
+            switchView('admin');
+        }
+
+        // --- ADMIN AUTHENTICATION ---
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('admin-user').value;
+            const p = document.getElementById('admin-pass').value;
+
+            if (u === 'admin' && p === 'smart2026') {
+                localStorage.setItem('ss_admin_logged', 'true');
+                document.getElementById('admin-login-screen').classList.add('hidden');
+                document.getElementById('admin-dashboard-screen').classList.remove('hidden');
+                renderAdminDashboardStats();
+                showToast("Logged into Admin Panel successfully!");
+            } else {
+                showToast("Invalid credentials! Use admin / smart2026");
+            }
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('ss_admin_logged');
+            document.getElementById('admin-login-screen').classList.remove('hidden');
+            document.getElementById('admin-dashboard-screen').classList.add('hidden');
+            showToast("Logged out from admin successfully.");
+        }
+
+        // --- ADMIN TABS ---
+        function switchAdminTab(tabName) {
+            ['overview', 'products', 'banners', 'settings'].forEach(t => {
+                document.getElementById(`admin-tab-${t}`).classList.add('hidden');
+                document.getElementById(`tab-btn-${t}`).className = "admin-tab px-5 py-3 border-b-2 border-transparent font-bold text-sm text-gray-400 hover:text-white flex items-center gap-2";
+            });
+            document.getElementById(`admin-tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${tabName}`).className = "admin-tab px-5 py-3 border-b-2 border-brand-red font-bold text-sm text-white flex items-center gap-2";
+
+            if (tabName === 'products') renderAdminProductsTable();
+            if (tabName === 'banners') renderAdminBannersManager();
+            if (tabName === 'settings') loadSettingsForm();
+        }
+
+        // --- STOREFRONT RENDER ---
+        function renderStorefront() {
+            // Update Store Settings Info
+            document.getElementById('store-brand-name').innerHTML = `SMART<span class="text-brand-red">${settings.companyName.replace('SMART', '')}</span>`;
+            document.getElementById('store-phone-display').innerHTML = `<i class="fa-solid fa-phone text-[10px]"></i> ${settings.phone}`;
+            document.getElementById('footer-brand-name').innerHTML = `SMART<span class="text-brand-red">${settings.companyName.replace('SMART', '')}</span>`;
+            document.getElementById('footer-phone-display').innerHTML = `<i class="fa-solid fa-phone text-brand-red"></i> ${settings.phone}`;
+            document.getElementById('footer-address-display').innerHTML = `<i class="fa-solid fa-location-dot text-brand-red ml-2"></i> ${settings.address}`;
+            document.getElementById('cart-phone-link').innerHTML = `<i class="fa-solid fa-phone"></i> CALL TO PLACE ORDER (${settings.phone})`;
+
+            // Render Hero Banners
+            renderHeroCarousel();
+
+            // Render Products
+            displayedProducts = [...products];
+            renderProductsGrid(displayedProducts);
+        }
+
+        function renderHeroCarousel() {
+            const container = document.getElementById('hero-carousel');
+            container.innerHTML = '';
+
+            banners.forEach((banner, idx) => {
+                const slide = document.createElement('div');
+                slide.className = `carousel-slide ${idx === 0 ? 'active' : ''} w-full p-6 sm:p-12 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 bg-gradient-to-r from-black via-zinc-900 to-red-950`;
+                slide.innerHTML = `
+                    <div class="space-y-4 max-w-xl text-center md:text-left z-10">
+                        <span class="inline-block bg-brand-red text-white text-xs uppercase tracking-widest font-extrabold px-3 py-1 rounded-full border border-white/20 shadow-lg">${banner.badge}</span>
+                        <h1 class="text-3xl sm:text-5xl font-black text-white leading-tight">${banner.title}</h1>
+                        <p class="text-gray-300 text-sm sm:text-base leading-relaxed">${banner.desc}</p>
+                        <div class="pt-2 flex flex-wrap justify-center md:justify-start gap-4">
+                            <a href="#products" class="bg-brand-red hover:bg-brand-redHover text-white font-bold px-8 py-3.5 rounded-xl shadow-lg transition border border-red-400">SHOP NOW</a>
+                            <a href="tel:${settings.phone}" class="bg-white/10 hover:bg-white/20 text-white font-bold px-6 py-3.5 rounded-xl backdrop-blur-md transition border border-white/20"><i class="fa-solid fa-phone mr-2"></i> Order by Phone</a>
+                        </div>
+                    </div>
+                    <div class="relative w-full max-w-sm md:max-w-md flex justify-center items-center">
+                        <div class="absolute w-64 h-64 bg-brand-red/20 rounded-full blur-3xl"></div>
+                        <img src="${banner.image}" class="relative z-10 max-h-72 object-contain drop-shadow-[0_15px_15px_rgba(229,9,20,0.4)] rounded-2xl">
+                    </div>
+                `;
+                container.appendChild(slide);
+            });
+
+            // Add carousel buttons & dots
+            container.innerHTML += `
+                <button onclick="prevSlide()" class="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/20 hover:bg-brand-red text-white flex items-center justify-center transition backdrop-blur-md"><i class="fa-solid fa-chevron-left"></i></button>
+                <button onclick="nextSlide()" class="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/20 hover:bg-brand-red text-white flex items-center justify-center transition backdrop-blur-md"><i class="fa-solid fa-chevron-right"></i></button>
+            `;
+        }
+
+        function renderProductsGrid(prods) {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '';
+
+            prods.forEach(product => {
+                const card = document.createElement('div');
+                card.className = "bg-brand-cardBg rounded-2xl border-2 border-gray-100 p-4 flex flex-col justify-between glow-card relative group";
+                card.innerHTML = `
+                    <div>
+                        <div class="relative overflow-hidden rounded-xl bg-gray-50 h-48 flex items-center justify-center mb-4">
+                            <img src="${product.image}" class="object-cover w-full h-full group-hover:scale-105 transition duration-500">
+                            <span class="absolute top-2 left-2 bg-brand-red text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-md tracking-wider">${product.category}</span>
+                            <button onclick="openModal(${product.id})" class="absolute bottom-2 right-2 bg-white/90 hover:bg-brand-red hover:text-white text-gray-800 p-2 rounded-lg text-xs font-bold shadow-md transition"><i class="fa-solid fa-eye"></i> Quick View</button>
+                        </div>
+                        <div class="flex items-center gap-1 text-amber-400 text-xs font-bold mb-1">
+                            <i class="fa-solid fa-star"></i> <span>${product.rating}</span> <span class="text-gray-400 font-normal">(${product.reviews})</span>
+                        </div>
+                        <h3 class="font-extrabold text-brand-darkText text-base line-clamp-2 hover:text-brand-red transition">${product.name}</h3>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-gray-400 font-semibold block">Price:</span>
+                            <span class="text-xl font-black text-brand-red">${product.price} <span class="text-xs">LYD</span></span>
+                        </div>
+                        <button onclick="addToCart(${product.id})" class="bg-brand-red hover:bg-brand-redHover text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition"><i class="fa-solid fa-cart-plus"></i> Add</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- ADMIN DASHBOARD STATS & TABLES ---
+        function renderAdminDashboardStats() {
+            document.getElementById('stat-total-products').innerText = products.length;
+            document.getElementById('stat-total-banners').innerText = banners.length;
+            document.getElementById('stat-phone').innerText = settings.phone;
+        }
+
+        function renderAdminProductsTable() {
+            const tbody = document.getElementById('admin-product-table-body');
+            tbody.innerHTML = '';
+
+            products.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-zinc-800 hover:bg-zinc-900/50 transition";
+                tr.innerHTML = `
+                    <td class="p-4 flex items-center gap-3">
+                        <img src="${p.image}" class="w-10 h-10 rounded-lg object-cover">
+                        <div>
+                            <div class="font-bold text-white text-sm line-clamp-1">${p.name}</div>
+                            <div class="text-xs text-gray-400 line-clamp-1">${p.description}</div>
+                        </div>
+                    </td>
+                    <td class="p-4 text-xs font-semibold text-gray-300"><span class="bg-zinc-800 px-2.5 py-1 rounded-md border border-zinc-700">${p.category}</span></td>
+                    <td class="p-4 font-black text-brand-red">${p.price} LYD</td>
+                    <td class="p-4 text-xs text-amber-400 font-bold"><i class="fa-solid fa-star"></i> ${p.rating}</td>
+                    <td class="p-4 text-right space-x-2">
+                        <button onclick="openEditProductModal(${p.id})" class="bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteProduct(${p.id})" class="bg-red-950/60 hover:bg-brand-red text-red-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderAdminBannersManager() {
+            const container = document.getElementById('admin-banners-container');
+            container.innerHTML = '';
+
+            banners.forEach((b, idx) => {
+                const card = document.createElement('div');
+                card.className = "bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-4";
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-black uppercase text-brand-red bg-red-950/40 px-2.5 py-1 rounded border border-red-900">Banner #${idx + 1}</span>
+                    </div>
+                    <form onsubmit="saveBannerEdit(event, ${b.id})" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1">Badge Title</label>
+                            <input type="text" id="b-badge-${b.id}" value="${b.badge}" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-brand-red">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1">Main Heading</label>
+                            <input type="text" id="b-title-${b.id}" value="${b.title}" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-brand-red">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1">Description</label>
+                            <textarea id="b-desc-${b.id}" rows="2" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-brand-red">${b.desc}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1">Image URL</label>
+                            <input type="url" id="b-image-${b.id}" value="${b.image}" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-brand-red">
+                        </div>
+                        <button type="submit" class="w-full bg-brand-red hover:bg-brand-redHover py-2.5 rounded-lg text-xs font-bold transition shadow">UPDATE BANNER</button>
+                    </form>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function loadSettingsForm() {
+            document.getElementById('setting-company').value = settings.companyName;
+            document.getElementById('setting-phone').value = settings.phone;
+            document.getElementById('setting-address').value = settings.address;
+        }
+
+        // --- CRUD ACTIONS FOR ADMIN ---
+        function openAddProductModal() {
+            document.getElementById('admin-modal-title').innerText = "Add New Product";
+            document.getElementById('edit-product-id').value = '';
+            document.getElementById('form-p-name').value = '';
+            document.getElementById('form-p-price').value = '';
+            document.getElementById('form-p-image').value = '';
+            document.getElementById('form-p-desc').value = '';
+            document.getElementById('admin-product-modal').classList.remove('hidden');
+            document.getElementById('admin-product-modal').classList.add('flex');
+        }
+
+        function openEditProductModal(id) {
+            const p = products.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('admin-modal-title').innerText = "Edit Product";
+            document.getElementById('edit-product-id').value = p.id;
+            document.getElementById('form-p-name').value = p.name;
+            document.getElementById('form-p-cat').value = p.category;
+            document.getElementById('form-p-price').value = p.price;
+            document.getElementById('form-p-image').value = p.image;
+            document.getElementById('form-p-desc').value = p.description;
+            document.getElementById('admin-product-modal').classList.remove('hidden');
+            document.getElementById('admin-product-modal').classList.add('flex');
+        }
+
+        function closeAdminProductModal() {
+            document.getElementById('admin-product-modal').classList.add('hidden');
+            document.getElementById('admin-product-modal').classList.remove('flex');
+        }
+
+        function saveAdminProduct(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-product-id').value;
+            const name = document.getElementById('form-p-name').value;
+            const category = document.getElementById('form-p-cat').value;
+            const price = parseFloat(document.getElementById('form-p-price').value);
+            const image = document.getElementById('form-p-image').value;
+            const description = document.getElementById('form-p-desc').value;
+
+            if (editId) {
+                // Update
+                const idx = products.findIndex(x => x.id == editId);
+                if (idx !== -1) {
+                    products[idx] = { ...products[idx], name, category, price, image, description };
+                }
+                showToast("Product updated successfully!");
+            } else {
+                // Create
+                const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+                products.push({ id: newId, name, category, price, rating: 5.0, reviews: 1, image, description });
+                showToast("New product added successfully!");
+            }
+
+            persistData();
+            closeAdminProductModal();
+            renderAdminProductsTable();
+        }
+
+        function deleteProduct(id) {
+            if (confirm("Are you sure you want to delete this product?")) {
+                products = products.filter(p => p.id !== id);
+                persistData();
+                renderAdminProductsTable();
+                showToast("Product deleted.");
+            }
+        }
+
+        function saveBannerEdit(e, id) {
+            e.preventDefault();
+            const badge = document.getElementById(`b-badge-${id}`).value;
+            const title = document.getElementById(`b-title-${id}`).value;
+            const desc = document.getElementById(`b-desc-${id}`).value;
+            const image = document.getElementById(`b-image-${id}`).value;
+
+            const idx = banners.findIndex(b => b.id === id);
+            if (idx !== -1) {
+                banners[idx] = { id, badge, title, desc, image };
+                persistData();
+                showToast("Banner updated & synced!");
+            }
+        }
+
+        function saveStoreSettings(e) {
+            e.preventDefault();
+            settings.companyName = document.getElementById('setting-company').value;
+            settings.phone = document.getElementById('setting-phone').value;
+            settings.address = document.getElementById('setting-address').value;
+            persistData();
+            showToast("Store settings saved & synced successfully!");
+        }
+
+        // --- FILTERS & CAROUSEL ---
+        function filterCategory(cat) {
+            if (cat === 'ALL') {
+                displayedProducts = [...products];
+            } else {
+                displayedProducts = products.filter(p => p.category.toLowerCase().includes(cat.toLowerCase()));
+            }
+            renderProductsGrid(displayedProducts);
+        }
+
+        function shuffleProducts() {
+            displayedProducts = [...displayedProducts].sort(() => Math.random() - 0.5);
+            renderProductsGrid(displayedProducts);
+            showToast("Shuffled products!");
+        }
+
+        // --- CAROUSEL SLIDER ---
+        function showSlide(index) {
+            const slides = document.querySelectorAll('.carousel-slide');
+            if (slides.length === 0) return;
+            currentSlide = (index + slides.length) % slides.length;
+            slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+        setInterval(nextSlide, 6000);
+
+        // --- QUICK VIEW & CART MODALS ---
+        function openModal(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            document.getElementById('modal-content').innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <div class="h-64 rounded-2xl overflow-hidden bg-gray-50 flex items-center justify-center">
+                        <img src="${product.image}" class="object-cover w-full h-full">
+                    </div>
+                    <div class="space-y-4">
+                        <span class="bg-brand-red text-white text-xs font-bold px-2.5 py-1 rounded-md uppercase">${product.category}</span>
+                        <h3 class="text-2xl font-black text-brand-darkText leading-tight">${product.name}</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">${product.description}</p>
+                        <div class="text-2xl font-black text-brand-red">${product.price} LYD</div>
+                        <div class="flex gap-3 pt-2">
+                            <button onclick="addToCart(${product.id}); closeModal();" class="flex-1 bg-brand-red hover:bg-brand-redHover text-white font-bold py-3 rounded-xl shadow-lg transition"><i class="fa-solid fa-cart-plus mr-1"></i> Add To Cart</button>
+                            <a href="tel:${settings.phone}" class="bg-black hover:bg-gray-800 text-white font-bold px-4 py-3 rounded-xl flex items-center justify-center"><i class="fa-solid fa-phone"></i></a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('product-modal').classList.remove('hidden');
+            document.getElementById('product-modal').classList.add('flex');
+        }
+        function closeModal() {
+            document.getElementById('product-modal').classList.add('hidden');
+            document.getElementById('product-modal').classList.remove('flex');
+        }
+
+        function toggleCart() {
+            const drawer = document.getElementById('cart-drawer');
+            drawer.classList.toggle('hidden');
+            drawer.classList.toggle('flex');
+        }
+
+        function addToCart(id) {
+            const product = products.find(p => p.id === id);
+            if (product) {
+                cart.push(product);
+                updateCartUI();
+                showToast(`Added ${product.name.substring(0, 18)}...`);
+            }
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = cart.length;
+            const container = document.getElementById('cart-items');
+            container.innerHTML = '';
+            let total = 0;
+            if (cart.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 py-8 font-semibold">Your shopping cart is empty.</p>';
+            } else {
+                cart.forEach((item, index) => {
+                    total += item.price;
+                    const el = document.createElement('div');
+                    el.className = "flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200";
+                    el.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <img src="${item.image}" class="w-12 h-12 object-cover rounded-lg">
+                            <div>
+                                <h4 class="font-extrabold text-xs text-gray-800 line-clamp-1">${item.name}</h4>
+                                <span class="text-brand-red font-black text-sm">${item.price} LYD</span>
+                            </div>
+                        </div>
+                        <button onclick="removeFromCart(${index})" class="text-gray-400 hover:text-brand-red p-1"><i class="fa-solid fa-trash-can"></i></button>
+                    `;
+                    container.appendChild(el);
+                });
+            }
+            document.getElementById('cart-total').innerText = `${total} LYD`;
+        }
+
+        document.getElementById('cart-btn').addEventListener('click', toggleCart);
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
+
+        // --- INITIALIZE ON LOAD ---
+        window.onload = function() {
+            renderStorefront();
+        };
+    </script>
+</body>
+</html>
